@@ -82,7 +82,9 @@ export const ChangePasswordSheet = forwardRef<BottomSheetModal>((_props, ref) =>
             value={current}
             onChangeText={setCurrent}
             placeholder="Mevcut şifren"
-            secureTextEntry
+            secureToggle
+            defaultVisible
+            toggleTestID="current-password-toggle"
           />
           <TextField
             testID="new-password-input"
@@ -90,7 +92,9 @@ export const ChangePasswordSheet = forwardRef<BottomSheetModal>((_props, ref) =>
             value={next}
             onChangeText={setNext}
             placeholder="En az 6 karakter"
-            secureTextEntry
+            secureToggle
+            defaultVisible
+            toggleTestID="new-password-toggle"
           />
           <TextField
             testID="confirm-new-password-input"
@@ -98,7 +102,9 @@ export const ChangePasswordSheet = forwardRef<BottomSheetModal>((_props, ref) =>
             value={confirm}
             onChangeText={setConfirm}
             placeholder="Yeni şifreni tekrar gir"
-            secureTextEntry
+            secureToggle
+            defaultVisible
+            toggleTestID="confirm-new-password-toggle"
           />
           <AppButton
             testID="change-password-submit-button"

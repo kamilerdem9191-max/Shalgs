@@ -91,6 +91,7 @@ export function TextField({
   secureToggle,
   toggleTestID,
   secureTextEntry,
+  defaultVisible = false,
   ...props
 }: TextInputProps & {
   label?: string;
@@ -98,10 +99,11 @@ export function TextField({
   style?: StyleProp<ViewStyle>;
   secureToggle?: boolean;
   toggleTestID?: string;
+  defaultVisible?: boolean;
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(defaultVisible);
   const isSecure = secureToggle ? !visible : secureTextEntry;
   return (
     <View style={[styles.fieldWrap, style]}>

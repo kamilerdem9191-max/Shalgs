@@ -99,7 +99,9 @@ export default function Register() {
             value={password}
             onChangeText={setPassword}
             placeholder="En az 6 karakter"
-            secureTextEntry
+            secureToggle
+            defaultVisible
+            toggleTestID="register-password-toggle"
           />
 
           {isStudent ? (
