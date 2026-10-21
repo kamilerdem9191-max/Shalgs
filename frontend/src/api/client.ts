@@ -85,6 +85,21 @@ export async function adminStats(): Promise<any> {
   return data;
 }
 
+async function adminRequest(path: string, method = "GET"): Promise<any> {
+  const token = await storage.secureGet(ADMIN_TOKEN_KEY, "");
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(res.status, (data && data.detail) || "Hata");
+  return data;
+}
+
+export const adminUsers = () => adminRequest("/admin/users");
+export const adminResetPassword = (userId: string) =>
+  adminRequest(`/admin/users/${encodeURIComponent(userId)}/reset-password`, "POST");
+
 export async function adminLogout(): Promise<void> {
   await storage.secureRemove(ADMIN_TOKEN_KEY);
 }

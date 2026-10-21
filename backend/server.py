@@ -7,6 +7,7 @@ import logging
 import uuid
 import random
 import string
+import secrets
 import re
 import ipaddress
 import httpx
@@ -1274,6 +1275,30 @@ async def admin_stats(_: bool = Depends(require_admin)):
         "not_fulfilling_ratio": ratio,
     }
 
+
+@api_router.get("/admin/users")
+async def admin_users(_: bool = Depends(require_admin)):
+    users = await db.users.find(
+        {}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1, "student_code": 1}
+    ).sort("name", 1).to_list(5000)
+    return {"users": users}
+
+
+TEMP_PW_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
+
+
+@api_router.post("/admin/users/{user_id}/reset-password")
+async def admin_reset_password(user_id: str, _: bool = Depends(require_admin)):
+    temp = "".join(secrets.choice(TEMP_PW_ALPHABET) for _ in range(8))
+    res = await db.users.update_one(
+        {"user_id": user_id}, {"$set": {"password": hash_password(temp)}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    # Log the user out everywhere so only the new password works.
+    await db.user_sessions.delete_many({"user_id": user_id})
+    logger.info(f"Admin reset password for user {user_id}")
+    return {"temporary_password": temp}
 
 
 # ---------------------------------------------------------------------------
