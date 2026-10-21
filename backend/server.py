@@ -333,7 +333,7 @@ async def create_session(user_id: str) -> str:
         "session_token": token,
         "user_id": user_id,
         "created_at": iso(now_utc()),
-        "expires_at": iso(now_utc() + timedelta(days=7)),
+        "expires_at": iso(now_utc() + timedelta(days=365)),
     })
     return token
 
@@ -1226,7 +1226,7 @@ async def admin_login(data: AdminLoginInput):
     await db.admin_sessions.insert_one({
         "token": token,
         "created_at": iso(now_utc()),
-        "expires_at": iso(now_utc() + timedelta(hours=12)),
+        "expires_at": iso(now_utc() + timedelta(days=365)),
     })
     return {"token": token}
 

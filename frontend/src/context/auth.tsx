@@ -3,10 +3,11 @@ import { Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
-import { API, apiGet, apiPost, clearToken, loadToken, setToken } from "@/src/api/client";
+import { API, ApiError, apiGet, apiPost, clearToken, loadToken, setToken } from "@/src/api/client";
 import { storage } from "@/src/utils/storage";
 
 const REMEMBER_KEY = "sha_remember_me";
+const USER_CACHE_KEY = "sha_cached_user";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -78,11 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await apiGet("/auth/me");
       setUser(res.user);
-    } catch {
-      await clearToken();
-      setUser(null);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        await clearToken();
+        setUser(null);
+        return;
+      }
+      // Network/server hiccup: keep the session and use the last known user.
+      const cached = await storage.getItem(USER_CACHE_KEY, "");
+      setUser(cached ? JSON.parse(String(cached)) : null);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) storage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+  }, [user]);
 
   useEffect(() => {
     let mounted = true;
@@ -207,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     await clearToken();
+    await storage.removeItem(USER_CACHE_KEY);
     setUser(null);
   }, []);
 

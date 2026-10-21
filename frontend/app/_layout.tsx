@@ -9,6 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { StatusBar } from "expo-status-bar";
 
+import { ADMIN_TOKEN_KEY } from "@/src/api/client";
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { LoadingView } from "@/src/components/ui";
 import { WebFrame } from "@/src/components/web-frame";
@@ -16,6 +17,7 @@ import { AuthProvider, useAuth } from "@/src/context/auth";
 import { ToastProvider } from "@/src/context/toast";
 import { queryClient } from "@/src/query-client";
 import { useTheme } from "@/src/theme";
+import { storage } from "@/src/utils/storage";
 
 LogBox.ignoreAllLogs(true);
 
@@ -31,7 +33,12 @@ function RootNavigator() {
     const inAuth = seg0 === "(auth)";
 
     if (!user) {
-      if (!inAuth) router.replace("/(auth)/landing" as any);
+      if (!inAuth) {
+        // Müdür daha önce giriş yaptıysa doğrudan panele git.
+        storage.secureGet(ADMIN_TOKEN_KEY, "").then((t) =>
+          router.replace((t ? "/(auth)/admin" : "/(auth)/landing") as any)
+        );
+      }
       return;
     }
     if (!user.role) {
