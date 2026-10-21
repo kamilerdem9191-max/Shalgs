@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sha-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: lgskocu
+      - key: EMERGENT_EMAIL_KEY
+        value: disabled
+      - key: EMAIL_FROM_NAME
+        value: Sha
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: "720587"

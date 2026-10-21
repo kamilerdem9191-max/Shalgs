@@ -1,0 +1,11 @@
+# Netlify build config for the Sha web site (Expo web export)
+[build]
+  base = "frontend"
+  command = "yarn install && npx expo export -p web"
+  publish = "dist"
+
+# SPA fallback so direct links (e.g. /login) load the app
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

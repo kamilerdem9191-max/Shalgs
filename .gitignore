@@ -1,0 +1,17 @@
+# deps & build
+node_modules/
+frontend/node_modules/
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/.metro-cache/
+# python
+__pycache__/
+*.pyc
+backend/venv/
+backend/.venv/
+# secrets / local env
+.env
+*/.env
+# misc
+.DS_Store
