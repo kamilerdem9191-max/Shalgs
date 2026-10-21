@@ -5,6 +5,7 @@ import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { adminLogout, adminStats } from "@/src/api/client";
+import { AdminQuote } from "@/src/components/admin-quote";
 import { AdminUsers } from "@/src/components/admin-users";
 import { AppButton, Card, LoadingView } from "@/src/components/ui";
 import { useToast } from "@/src/context/toast";
@@ -119,6 +120,8 @@ export default function AdminPanel() {
             </View>
           </View>
         </Card>
+
+        <AdminQuote />
 
         <AdminUsers />
       </ScrollView>

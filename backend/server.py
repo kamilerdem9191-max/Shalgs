@@ -1301,6 +1301,35 @@ async def admin_reset_password(user_id: str, _: bool = Depends(require_admin)):
     return {"temporary_password": temp}
 
 
+DEFAULT_QUOTE = {
+    "text": "Hayatımızın bir döneminde fedakarlık yapmazsak, hayat boyu fedakarlık yapmak zorunda kalabiliriz.",
+    "author": "Rüstem AYAR",
+}
+
+
+class QuoteInput(BaseModel):
+    text: str
+    author: str = ""
+
+
+@api_router.get("/quote")
+async def get_quote():
+    doc = await db.settings.find_one({"key": "quote"}, {"_id": 0, "text": 1, "author": 1})
+    return doc or DEFAULT_QUOTE
+
+
+@api_router.put("/admin/quote")
+async def update_quote(data: QuoteInput, _: bool = Depends(require_admin)):
+    text = data.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Söz boş olamaz")
+    if len(text) > 300:
+        raise HTTPException(status_code=400, detail="Söz en fazla 300 karakter olabilir")
+    quote = {"text": text, "author": data.author.strip()[:80]}
+    await db.settings.update_one({"key": "quote"}, {"$set": quote}, upsert=True)
+    return quote
+
+
 # ---------------------------------------------------------------------------
 # Meta
 # ---------------------------------------------------------------------------

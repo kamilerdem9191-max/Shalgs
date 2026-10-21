@@ -85,11 +85,12 @@ export async function adminStats(): Promise<any> {
   return data;
 }
 
-async function adminRequest(path: string, method = "GET"): Promise<any> {
+async function adminRequest(path: string, method = "GET", body?: any): Promise<any> {
   const token = await storage.secureGet(ADMIN_TOKEN_KEY, "");
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, (data && data.detail) || "Hata");
@@ -99,6 +100,13 @@ async function adminRequest(path: string, method = "GET"): Promise<any> {
 export const adminUsers = () => adminRequest("/admin/users");
 export const adminResetPassword = (userId: string) =>
   adminRequest(`/admin/users/${encodeURIComponent(userId)}/reset-password`, "POST");
+export const adminUpdateQuote = (text: string, author: string) =>
+  adminRequest("/admin/quote", "PUT", { text, author });
+export async function getQuote(): Promise<{ text: string; author: string }> {
+  const res = await fetch(`${API}/quote`);
+  if (!res.ok) throw new ApiError(res.status, "Hata");
+  return res.json();
+}
 
 export async function adminLogout(): Promise<void> {
   await storage.secureRemove(ADMIN_TOKEN_KEY);

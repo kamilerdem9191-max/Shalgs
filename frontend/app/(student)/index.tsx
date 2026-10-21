@@ -11,6 +11,7 @@ import { SUBJECTS, subjectColor } from "@/src/constants/subjects";
 import { useAuth } from "@/src/context/auth";
 import { useToast } from "@/src/context/toast";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
+import { QuoteCard } from "@/src/components/quote-card";
 import { todayISO } from "@/src/utils/date";
 
 type Goal = {
@@ -113,12 +114,7 @@ export default function StudentHome() {
         <Text style={styles.greetingName} testID="student-greeting">
           {user?.name ?? "Öğrenci"} 👋
         </Text>
-        <View style={styles.quoteBox} testID="student-quote">
-          <Text style={styles.quoteText}>
-            “Hayatımızın bir döneminde fedakarlık yapmazsak, hayat boyu fedakarlık yapmak zorunda kalabiliriz.”
-          </Text>
-          <Text style={styles.quoteAuthor}>— Rüstem AYAR</Text>
-        </View>
+        <QuoteCard />
       </View>
 
       <KeyboardAwareScrollView
@@ -274,17 +270,6 @@ const useStyles = makeStyles((colors) => ({
   },
   greetingSmall: { color: colors.muted, fontSize: 15 },
   greetingName: { color: colors.onSurface, fontSize: 26, fontWeight: "800" },
-  quoteBox: {
-    marginTop: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceTertiary,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.brandPrimary,
-    gap: 6,
-  },
-  quoteText: { color: colors.onSurface, fontSize: 15, fontStyle: "italic", lineHeight: 22 },
-  quoteAuthor: { color: colors.muted, fontSize: 13, fontWeight: "700", textAlign: "right" },
   scroll: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, gap: spacing.md },
   sectionTitle: { color: colors.onSurface, fontSize: 20, fontWeight: "800" },
   formCard: { gap: spacing.md },
