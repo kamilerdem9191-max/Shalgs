@@ -1287,7 +1287,11 @@ async def get_subjects():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    try:
+        await client.admin.command("ping")
+        return {"status": "ok", "db": "connected"}
+    except Exception as e:
+        return {"status": "ok", "db": "error", "detail": f"{type(e).__name__}: {str(e)[:300]}"}
 
 
 app.include_router(api_router)
@@ -1303,6 +1307,13 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
+    try:
+        await create_indexes()
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {type(e).__name__}: {e}")
+
+
+async def create_indexes():
     await db.users.create_index("email", unique=True)
     await db.users.create_index("user_id", unique=True)
     await db.users.create_index("student_code")
