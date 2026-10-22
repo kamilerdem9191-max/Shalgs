@@ -4,18 +4,20 @@ import { Text, View } from "react-native";
 import { getQuote } from "@/src/api/client";
 import { makeStyles, radius, spacing } from "@/src/theme";
 
-export const DEFAULT_QUOTE = {
-  text: "Hayatımızın bir döneminde fedakarlık yapmazsak, hayat boyu fedakarlık yapmak zorunda kalabiliriz.",
-  author: "Rüstem AYAR",
-};
+type Quote = { text: string; author: string };
 
+/** Today's quote chosen by the principal. Renders nothing when there is none. */
 export function QuoteCard() {
   const styles = useStyles();
-  const [quote, setQuote] = useState(DEFAULT_QUOTE);
+  const [quote, setQuote] = useState<Quote | null>(null);
 
   useEffect(() => {
-    getQuote().then(setQuote).catch(() => {});
+    getQuote()
+      .then((d) => setQuote(d.quote))
+      .catch(() => setQuote(null));
   }, []);
+
+  if (!quote) return null;
 
   return (
     <View style={styles.box} testID="student-quote">

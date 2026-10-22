@@ -589,6 +589,24 @@ async def change_password(
     return {"ok": True, "message": "Şifren güncellendi"}
 
 
+@api_router.delete("/auth/account")
+async def delete_account(user: dict = Depends(get_current_user)):
+    """Permanently delete the signed-in user's account and associated data."""
+    uid = user["user_id"]
+    await db.study_records.delete_many({"user_id": uid})
+    await db.goals.delete_many({"$or": [{"student_id": uid}, {"coach_id": uid}]})
+    await db.comments.delete_many({"$or": [{"student_id": uid}, {"coach_id": uid}]})
+    await db.coach_notifications.delete_many({"$or": [{"student_id": uid}, {"coach_id": uid}]})
+    await db.coach_student_connections.delete_many({"$or": [{"student_id": uid}, {"coach_id": uid}]})
+    await db.parent_student_connections.delete_many({"$or": [{"student_id": uid}, {"parent_id": uid}]})
+    if user.get("email"):
+        await db.password_resets.delete_many({"email": user["email"]})
+    await db.user_sessions.delete_many({"user_id": uid})
+    await db.users.delete_one({"user_id": uid})
+    logger.info("Account deleted by user request")
+    return {"ok": True}
+
+
 @api_router.post("/auth/logout")
 async def logout(authorization: Optional[str] = Header(None)):
     if authorization and authorization.startswith("Bearer "):
@@ -1192,8 +1210,8 @@ async def parent_unlink(student_id: str, user: dict = Depends(require_parent)):
 # touch the existing student/coach/parent auth or data.
 # ---------------------------------------------------------------------------
 
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "720587")
+ADMIN_USERNAME = os.environ["ADMIN_USERNAME"]
+ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 
 class AdminLoginInput(BaseModel):
@@ -1305,6 +1323,7 @@ DEFAULT_QUOTE = {
     "text": "Hayatımızın bir döneminde fedakarlık yapmazsak, hayat boyu fedakarlık yapmak zorunda kalabiliriz.",
     "author": "Rüstem AYAR",
 }
+TR_TZ = timezone(timedelta(hours=3))
 
 
 class QuoteInput(BaseModel):
@@ -1312,22 +1331,68 @@ class QuoteInput(BaseModel):
     author: str = ""
 
 
+async def all_quotes() -> list:
+    return await db.quotes.find({}, {"_id": 0}).sort("created_at", 1).to_list(1000)
+
+
+def todays_quote(quotes: list) -> Optional[dict]:
+    if not quotes:
+        return None
+    return quotes[datetime.now(TR_TZ).date().toordinal() % len(quotes)]
+
+
+async def seed_quotes():
+    """One-time: create the quotes list from the old single quote / default."""
+    if await db.settings.find_one({"key": "quotes_seeded"}):
+        return
+    old = await db.settings.find_one({"key": "quote"}, {"_id": 0})
+    if await db.quotes.count_documents({}) == 0:
+        await db.quotes.insert_one({
+            "id": str(uuid.uuid4()),
+            "text": (old or DEFAULT_QUOTE)["text"],
+            "author": (old or DEFAULT_QUOTE).get("author", ""),
+            "created_at": iso(now_utc()),
+        })
+    await db.settings.update_one({"key": "quotes_seeded"}, {"$set": {"value": True}}, upsert=True)
+
+
 @api_router.get("/quote")
 async def get_quote():
-    doc = await db.settings.find_one({"key": "quote"}, {"_id": 0, "text": 1, "author": 1})
-    return doc or DEFAULT_QUOTE
+    q = todays_quote(await all_quotes())
+    return {"quote": {"text": q["text"], "author": q.get("author", "")} if q else None}
 
 
-@api_router.put("/admin/quote")
-async def update_quote(data: QuoteInput, _: bool = Depends(require_admin)):
+@api_router.get("/admin/quotes")
+async def admin_list_quotes(_: bool = Depends(require_admin)):
+    quotes = await all_quotes()
+    today = todays_quote(quotes)
+    return {"quotes": quotes, "today_id": today["id"] if today else None}
+
+
+@api_router.post("/admin/quotes")
+async def admin_add_quote(data: QuoteInput, _: bool = Depends(require_admin)):
     text = data.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Söz boş olamaz")
     if len(text) > 300:
         raise HTTPException(status_code=400, detail="Söz en fazla 300 karakter olabilir")
-    quote = {"text": text, "author": data.author.strip()[:80]}
-    await db.settings.update_one({"key": "quote"}, {"$set": quote}, upsert=True)
+    quote = {
+        "id": str(uuid.uuid4()),
+        "text": text,
+        "author": data.author.strip()[:80],
+        "created_at": iso(now_utc()),
+    }
+    await db.quotes.insert_one(quote)
+    quote.pop("_id", None)
     return quote
+
+
+@api_router.delete("/admin/quotes/{quote_id}")
+async def admin_delete_quote(quote_id: str, _: bool = Depends(require_admin)):
+    res = await db.quotes.delete_one({"id": quote_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Söz bulunamadı")
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------
@@ -1379,6 +1444,7 @@ async def create_indexes():
     await db.parent_student_connections.create_index("parent_id")
     await db.parent_student_connections.create_index("student_id")
     await db.password_resets.create_index("email")
+    await seed_quotes()
     logger.info("ŞHA LGS Koçu backend started")
 
 

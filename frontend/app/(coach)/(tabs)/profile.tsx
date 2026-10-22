@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiGet } from "@/src/api/client";
 import { AppButton, Card, LoadingView } from "@/src/components/ui";
 import { ChangePasswordSheet } from "@/src/components/ChangePasswordSheet";
+import { DeleteAccountButton } from "@/src/components/delete-account";
 import { useAuth } from "@/src/context/auth";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
@@ -95,6 +96,7 @@ export default function CoachProfile() {
             icon={<SignOut size={20} color={colors.brandPrimary} />}
             onPress={logout}
           />
+          <DeleteAccountButton />
         </ScrollView>
       )}
       <ChangePasswordSheet ref={pwSheet} />

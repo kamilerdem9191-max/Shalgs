@@ -100,9 +100,12 @@ async function adminRequest(path: string, method = "GET", body?: any): Promise<a
 export const adminUsers = () => adminRequest("/admin/users");
 export const adminResetPassword = (userId: string) =>
   adminRequest(`/admin/users/${encodeURIComponent(userId)}/reset-password`, "POST");
-export const adminUpdateQuote = (text: string, author: string) =>
-  adminRequest("/admin/quote", "PUT", { text, author });
-export async function getQuote(): Promise<{ text: string; author: string }> {
+export const adminListQuotes = () => adminRequest("/admin/quotes");
+export const adminAddQuote = (text: string, author: string) =>
+  adminRequest("/admin/quotes", "POST", { text, author });
+export const adminDeleteQuote = (id: string) =>
+  adminRequest(`/admin/quotes/${encodeURIComponent(id)}`, "DELETE");
+export async function getQuote(): Promise<{ quote: { text: string; author: string } | null }> {
   const res = await fetch(`${API}/quote`);
   if (!res.ok) throw new ApiError(res.status, "Hata");
   return res.json();
